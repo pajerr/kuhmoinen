@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mökki Lähtölista</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            width: 0%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-clear {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #ee5a5a;
+        }
+
+        .btn-save {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #45b7b8;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            background: #f1f3f4;
+            padding: 15px 25px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #2c3e50;
+            border-left: 4px solid #3498db;
+        }
+
+        .task-list {
+            padding: 0 25px 25px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px 0;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s ease;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .task-item.completed {
+            background-color: #e8f5e8;
+        }
+
+        .task-checkbox {
+            width: 22px;
+            height: 22px;
+            margin-right: 15px;
+            margin-top: 2px;
+            accent-color: #4CAF50;
+            cursor: pointer;
+        }
+
+        .task-label {
+            flex: 1;
+            line-height: 1.5;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .task-item.completed .task-label {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .completion-message {
+            text-align: center;
+            padding: 30px;
+            background: #d4f6d4;
+            color: #2d5a2d;
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: none;
+        }
+
+        .completion-message.show {
+            display: block;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .controls {
+                padding: 15px;
+            }
+
+            .task-list {
+                padding: 0 20px 20px;
+            }
+
+            .task-item {
+                padding: 18px 0;
+            }
+
+            .task-checkbox {
+                width: 24px;
+                height: 24px;
+            }
+
+            .btn {
+                padding: 12px 16px;
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Larger touch targets for mobile */
+        @media (hover: none) and (pointer: coarse) {
+            .task-item {
+                padding: 20px 0;
+            }
+            
+            .task-checkbox {
+                width: 26px;
+                height: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏡 Mökki Lähtölista</h1>
+            <p>Muista nämä asiat lähtiessäsi mökiltä</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-clear" onclick="clearAll()">🔄 Tyhjennä kaikki</button>
+            <button class="btn btn-save" onclick="saveProgress()">💾 Tallenna tila</button>
+        </div>
+
+        <div class="completion-message" id="completionMessage">
+            🎉 Hienoa! Kaikki tehtävät suoritettu!
+        </div>
+
+        <div class="section">
+            <div class="section-header">🏡 Ulkopiha</div>
+            <div class="task-list">
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task1">
+                    <label for="task1" class="task-label">Ulkovarastojen ovet kiinni ja avaimet avainpussiin, avainpussi paikoilleen</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task2">
+                    <label for="task2" class="task-label">Roskis liiteristä</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task3">
+                    <label for="task3" class="task-label">Ovi lukkoon</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">🧖‍♂️ Sauna</div>
+            <div class="task-list">
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task4">
+                    <label for="task4" class="task-label">Päävirta kytkin</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task5">
+                    <label for="task5" class="task-label">Portti kiinni</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task6">
+                    <label for="task6" class="task-label">Ikkunan saunan kiinni</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">🏠 Talossa</div>
+            <div class="task-list">
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task7">
+                    <label for="task7" class="task-label">Vesihana off</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task8">
+                    <label for="task8" class="task-label">Tiski ja pesukone off</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task9">
+                    <label for="task9" class="task-label">Ilmalämpöpumppu 20°C</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task10">
+                    <label for="task10" class="task-label">Vessanlämmitys saa olla tai pois</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task11">
+                    <label for="task11" class="task-label">Liesituuletin pois seinästä</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task12">
+                    <label for="task12" class="task-label">Pumppu pois seinästä</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task13">
+                    <label for="task13" class="task-label">Eteisen ikkuna varmuudella kiinni ja työntö ulkoa</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task14">
+                    <label for="task14" class="task-label">Väliovi lukko kiinni</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task15">
+                    <label for="task15" class="task-label">Avainpussi piiloon</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task16">
+                    <label for="task16" class="task-label">Jääkaappi seinästä pois ja ovi auki tai jää päälle riippuen tilanteesta</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task17">
+                    <label for="task17" class="task-label">Kaikki pois seinästä keittiössä koneet</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task18">
+                    <label for="task18" class="task-label">Elintarvikkeet pois</label>
+                </div>
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox" id="task19">
+                    <label for="task19" class="task-label">Roskat pois</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load saved state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            updateProgress();
+            
+            // Add event listeners to all checkboxes
+            const checkboxes = document.querySelectorAll('.task-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateTaskAppearance(this);
+                    updateProgress();
+                    saveProgress();
+                });
+            });
+
+            // Add click listeners to labels for better mobile experience
+            const labels = document.querySelectorAll('.task-label');
+            labels.forEach((label, index) => {
+                label.addEventListener('click', function() {
+                    const checkbox = document.getElementById(label.getAttribute('for'));
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                });
+            });
+        });
+
+        function updateTaskAppearance(checkbox) {
+            const taskItem = checkbox.closest('.task-item');
+            if (checkbox.checked) {
+                taskItem.classList.add('completed');
+            } else {
+                taskItem.classList.remove('completed');
+            }
+        }
+
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('.task-checkbox');
+            const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
+            const progress = (checkedBoxes.length / checkboxes.length) * 100;
+            
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            const completionMessage = document.getElementById('completionMessage');
+            if (progress === 100) {
+                completionMessage.classList.add('show');
+            } else {
+                completionMessage.classList.remove('show');
+            }
+        }
+
+        function clearAll() {
+            if (confirm('Haluatko varmasti tyhjentää kaikki merkinnät?')) {
+                const checkboxes = document.querySelectorAll('.task-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    updateTaskAppearance(checkbox);
+                });
+                updateProgress();
+                saveProgress();
+            }
+        }
+
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('.task-checkbox');
+            const state = {};
+            checkboxes.forEach(checkbox => {
+                state[checkbox.id] = checkbox.checked;
+            });
+            localStorage.setItem('mokkilista', JSON.stringify(state));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('mokkilista');
+            if (saved) {
+                const state = JSON.parse(saved);
+                Object.keys(state).forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.checked = state[id];
+                        updateTaskAppearance(checkbox);
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html> 
